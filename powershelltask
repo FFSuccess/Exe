@@ -1,0 +1,1 @@
+schtasks /create /tn "CreateDesktopFile" /sc onlogon /tr "powershell -command \"New-Item -Path $env:USERPROFILE\Desktop\logon.txt -ItemType File\"" /ru "%USERNAME%" /f
