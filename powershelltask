@@ -1,1 +1,3 @@
-schtasks /create /tn "CreateDesktopFile" /sc onlogon /tr "powershell -NoProfile -ExecutionPolicy Bypass -Command \"New-Item -Path $env:USERPROFILE\Desktop\logon.txt -ItemType File -Force\"" /f
+$action = New-ScheduledTaskAction -Execute 'powershell.exe' -Argument '-NoProfile -ExecutionPolicy Bypass -Command "New-Item -Path $env:USERPROFILE\Desktop\logon.txt -ItemType File -Force"'
+$trigger = New-ScheduledTaskTrigger -AtLogOn
+Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "CreateDesktopFile" -User "$env:USERNAME" -RunLevel Interactive
