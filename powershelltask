@@ -1,1 +1,1 @@
-schtasks /create /tn "CreateDesktopFile" /sc onlogon /tr "powershell -NoProfile -ExecutionPolicy Bypass -Command \"New-Item -Path $env:USERPROFILE\Desktop\logon.txt -ItemType File -Force\"" /it /f
+schtasks /create /tn "TestTask" /sc once /st 23:59 /tr "cmd /c echo Hello > %USERPROFILE%\Desktop\test.txt" /f
