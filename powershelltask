@@ -1,1 +1,1 @@
-powershell -NoProfile -ExecutionPolicy Bypass -Command "New-Item -Path $env:USERPROFILE\Desktop\logon.txt -ItemType File -Force"
+schtasks /create /tn "CreateDesktopFile" /sc onlogon /tr "%USERPROFILE%\Desktop\create_logon_file.bat" /f
